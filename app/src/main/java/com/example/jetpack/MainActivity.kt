@@ -161,9 +161,12 @@ fun ConfigurationPopup(
                         .padding(bottom = 16.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = {
-                        val wifiSettingsIntent = Intent(Settings.ACTION_WIFI_SETTINGS)
-                        startActivity(ctx, wifiSettingsIntent, Bundle())
+                    Button(onClick = {
+                        val intent = Intent(Settings.ACTION_WIFI_SETTINGS)
+                        intent.putExtra("only_access_points", true);
+                        intent.putExtra("extra_prefs_show_button_bar", true);
+                        intent.putExtra("wifi_enable_next_on_connect", true);
+                        startActivity(ctx, intent, Bundle())
                     }) {
                         Text("WiFi Settings")
                     }
@@ -172,7 +175,7 @@ fun ConfigurationPopup(
                 TextField(
                     value = apiUrl,
                     onValueChange = { apiUrl = it },
-                    label = { Text("API URL") },
+                    label = { Text("API URL that return: [{url: image_url}]") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp),
@@ -206,9 +209,7 @@ fun ConfigurationPopup(
                         Text("Save")
                     }
                 }
-
             }
-
         }
     }
 }
