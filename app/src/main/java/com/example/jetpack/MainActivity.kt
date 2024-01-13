@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -24,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,7 +37,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.example.jetpack.ui.theme.JetpackTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,27 +52,32 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Main() {
+fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
     var apiUrl by remember { mutableStateOf("https://jsonplaceholder.typicode.com/photos") }
-    var imageUrl by remember { mutableStateOf("https://flodesk.com/flodesk.png")}
+    var imageUrl by remember { mutableStateOf("https://flodesk.com/flodesk.png") }
     var loading by remember { mutableStateOf(true) }
     var isConfigPopupVisible by remember { mutableStateOf(false) }
 
+    val coroutineScope: CoroutineScope = rememberCoroutineScope()
+
     // Start periodic updates
     LaunchedEffect(Unit) {
-        while (true) {
-            loading = true
-            try {
-                val response = PhotoApi.service.getPhotos(apiUrl).execute().body()
-                if (response != null) {
-                    imageUrl = response.first().url
+        coroutineScope.launch(Dispatchers.IO) {
+            while (true) {
+                loading = true
+                try {
+                    val response = photoAPI.getPhotos(apiUrl).execute().body()
+                    if (response != null) {
+                        imageUrl = response.first().url
+                    }
+                } catch (e: Exception) {
+                    Log.e("Main", e.toString())
                 }
-            } catch (e: Exception) {
-                e.message?.let { Log.e("Main", it) }
-            }
-            loading = false
+                loading = false
+                Log.i("Main", imageUrl)
 
-            delay(3000)
+                delay(3000)
+            }
         }
     }
 
@@ -77,23 +85,20 @@ fun Main() {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        if (loading) {
-            CircularProgressIndicator()
-        } else {
-            AsyncImage(
-                model = imageUrl,
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-                    .pointerInput(Unit) {
-                        detectTapGestures {
-                            isConfigPopupVisible = true
-                        }
+        AsyncImage(
+            model = imageUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .pointerInput(Unit) {
+                    detectTapGestures {
+                        isConfigPopupVisible = true
                     }
-            )
-        }
+                }
+        )
+
 
         // Show Configuration Popup
         if (isConfigPopupVisible) {
