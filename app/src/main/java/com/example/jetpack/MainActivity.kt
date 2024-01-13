@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +24,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -38,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
-import com.example.jetpack.ui.theme.JetpackTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -55,10 +56,11 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
-    var apiUrl by remember { mutableStateOf("https://api.thecatapi.com/v1/images/search?limit=1") }
+    var apiUrl by remember { mutableStateOf("https://api.thecatapi.com/v1/images/search?limit=10") }
     var imageUrl by remember { mutableStateOf("https://flodesk.com/flodesk.png") }
     var loading by remember { mutableStateOf(true) }
     var isConfigPopupVisible by remember { mutableStateOf(false) }
+    var imageLoopSeconds by remember { mutableStateOf(30L) }
 
     val coroutineScope: CoroutineScope = rememberCoroutineScope()
 
@@ -70,30 +72,27 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
                 try {
                     val response = photoAPI.getPhotos(apiUrl).execute().body()
                     if (response != null) {
-                        imageUrl = response.first().url
+                        for (photo in response) {
+                            imageUrl = photo.url
+                            delay(imageLoopSeconds * 1000)
+                        }
                     }
                 } catch (e: Exception) {
                     Log.e("Main", e.toString())
                 }
                 loading = false
                 Log.i("Main", imageUrl)
-
-                delay(3000)
             }
         }
     }
 
     Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
     ) {
         Crossfade(
-            targetState = imageUrl,
-            label = "Main Image",
-            animationSpec = tween(1000)
+            targetState = imageUrl, label = "Main Image", animationSpec = tween(1000)
         ) { imgUrl ->
-            AsyncImage(
-                model = imgUrl,
+            AsyncImage(model = imgUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
@@ -103,8 +102,7 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
                         detectTapGestures {
                             isConfigPopupVisible = true
                         }
-                    }
-            )
+                    })
         }
 
 
@@ -112,33 +110,30 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
         if (isConfigPopupVisible) {
             ConfigurationPopup(
                 onDismiss = { isConfigPopupVisible = false },
-                onSave = { newApiUrl ->
+                onSave = { newApiUrl, seconds ->
                     apiUrl = newApiUrl
+                    imageLoopSeconds = seconds
                 },
-                apiUrl
+                apiUrl,
+                imageLoopSeconds
             )
         }
     }
-
-
 }
 
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    JetpackTheme {
-        Main()
-    }
+    Main()
 }
 
 
 @Composable
 fun ConfigurationPopup(
-    onDismiss: () -> Unit,
-    onSave: (String) -> Unit,
-    oldUrl: String,
+    onDismiss: () -> Unit, onSave: (String, Long) -> Unit, oldUrl: String, oldDelay: Long
 ) {
     var apiUrl by remember { mutableStateOf(oldUrl) }
+    var delaySeconds by remember { mutableLongStateOf(oldDelay) }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -149,35 +144,46 @@ fun ConfigurationPopup(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            TextField(
-                value = apiUrl,
-                onValueChange = { apiUrl = it },
-                label = { Text("Enter API URL") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Uri),
-            )
+            Column {
+                TextField(
+                    value = apiUrl,
+                    onValueChange = { apiUrl = it },
+                    label = { Text("API URL") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Uri),
+                )
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(onClick = onDismiss) {
-                    Text("Cancel")
-                }
+                TextField(value = delaySeconds.toString(),
+                    label = { Text(text = "Each image delay in seconds")},
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                    onValueChange = { delaySeconds = it.toLong() })
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancel")
+                    }
 
-                TextButton(onClick = {
-                    onSave(apiUrl)
-                    onDismiss()
-                }) {
-                    Text("Save")
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    TextButton(onClick = {
+                        onSave(apiUrl, delaySeconds)
+                        onDismiss()
+                    }) {
+                        Text("Save")
+                    }
                 }
             }
+
         }
     }
 }
