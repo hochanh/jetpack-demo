@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.jetpack"
+    namespace = "com.manhtai.whatthefoto"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.jetpack"
+        applicationId = "com.manhtai.whatthefoto"
         minSdk = 23
         targetSdk = 34
         versionCode = 1
