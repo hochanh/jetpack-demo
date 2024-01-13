@@ -1,4 +1,4 @@
-package com.example.jetpack
+package com.manhtai.whatthefoto
 
 import android.content.Context
 import android.content.Intent
@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -132,7 +131,7 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun MainPreview() {
     Main()
 }
 
