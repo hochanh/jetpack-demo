@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
     var apiUrl by remember { mutableStateOf("https://api.thecatapi.com/v1/images/search?limit=10") }
-    var imageUrl by remember { mutableStateOf("https://flodesk.com/flodesk.png") }
+    var imageUrl by remember { mutableStateOf("https://cdn2.thecatapi.com/images/7_rjG2-pc.jpg") }
     var loading by remember { mutableStateOf(true) }
     var isConfigPopupVisible by remember { mutableStateOf(false) }
     var imageLoopSeconds by remember { mutableStateOf(30L) }
