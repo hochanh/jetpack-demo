@@ -7,8 +7,6 @@ import retrofit2.http.GET
 import retrofit2.http.Url
 
 data class Photo(
-    val id: Int,
-    val title: String,
     val url: String,
 )
 

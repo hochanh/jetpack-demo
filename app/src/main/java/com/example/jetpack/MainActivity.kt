@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
-    var apiUrl by remember { mutableStateOf("https://jsonplaceholder.typicode.com/photos") }
+    var apiUrl by remember { mutableStateOf("https://api.thecatapi.com/v1/images/search?limit=1") }
     var imageUrl by remember { mutableStateOf("https://flodesk.com/flodesk.png") }
     var loading by remember { mutableStateOf(true) }
     var isConfigPopupVisible by remember { mutableStateOf(false) }
@@ -76,7 +76,7 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
                 loading = false
                 Log.i("Main", imageUrl)
 
-                delay(3000)
+                delay(30000)
             }
         }
     }
