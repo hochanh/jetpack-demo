@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -76,7 +78,7 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
                 loading = false
                 Log.i("Main", imageUrl)
 
-                delay(30000)
+                delay(3000)
             }
         }
     }
@@ -85,19 +87,25 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        AsyncImage(
-            model = imageUrl,
-            contentDescription = null,
-            contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black)
-                .pointerInput(Unit) {
-                    detectTapGestures {
-                        isConfigPopupVisible = true
+        Crossfade(
+            targetState = imageUrl,
+            label = "Main Image",
+            animationSpec = tween(1000)
+        ) { imgUrl ->
+            AsyncImage(
+                model = imgUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+                    .pointerInput(Unit) {
+                        detectTapGestures {
+                            isConfigPopupVisible = true
+                        }
                     }
-                }
-        )
+            )
+        }
 
 
         // Show Configuration Popup
