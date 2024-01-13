@@ -1,6 +1,9 @@
 package com.example.jetpack
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -34,11 +38,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.ContextCompat.startActivity
 import coil.compose.AsyncImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,6 +68,8 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
     var isConfigPopupVisible by remember { mutableStateOf(false) }
     var imageLoopSeconds by remember { mutableStateOf(30L) }
 
+    val TAG = "Main"
+    val context = LocalContext.current
     val coroutineScope: CoroutineScope = rememberCoroutineScope()
 
     // Start periodic updates
@@ -78,10 +86,10 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
                         }
                     }
                 } catch (e: Exception) {
-                    Log.e("Main", e.toString())
+                    Log.e(TAG, e.toString())
                 }
                 loading = false
-                Log.i("Main", imageUrl)
+                Log.i(TAG, imageUrl)
             }
         }
     }
@@ -109,6 +117,7 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
         // Show Configuration Popup
         if (isConfigPopupVisible) {
             ConfigurationPopup(
+                context,
                 onDismiss = { isConfigPopupVisible = false },
                 onSave = { newApiUrl, seconds ->
                     apiUrl = newApiUrl
@@ -130,6 +139,7 @@ fun GreetingPreview() {
 
 @Composable
 fun ConfigurationPopup(
+    ctx: Context,
     onDismiss: () -> Unit, onSave: (String, Long) -> Unit, oldUrl: String, oldDelay: Long
 ) {
     var apiUrl by remember { mutableStateOf(oldUrl) }
@@ -145,6 +155,20 @@ fun ConfigurationPopup(
                 .padding(16.dp)
         ) {
             Column {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = {
+                        val wifiSettingsIntent = Intent(Settings.ACTION_WIFI_SETTINGS)
+                        startActivity(ctx, wifiSettingsIntent, Bundle())
+                    }) {
+                        Text("WiFi Settings")
+                    }
+                }
+
                 TextField(
                     value = apiUrl,
                     onValueChange = { apiUrl = it },
@@ -156,7 +180,7 @@ fun ConfigurationPopup(
                 )
 
                 TextField(value = delaySeconds.toString(),
-                    label = { Text(text = "Each image delay in seconds")},
+                    label = { Text(text = "Each image delay in seconds") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp),
@@ -169,19 +193,20 @@ fun ConfigurationPopup(
                         .padding(top = 16.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) {
+                    Button(onClick = onDismiss) {
                         Text("Cancel")
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    TextButton(onClick = {
+                    Button(onClick = {
                         onSave(apiUrl, delaySeconds)
                         onDismiss()
                     }) {
                         Text("Save")
                     }
                 }
+
             }
 
         }
