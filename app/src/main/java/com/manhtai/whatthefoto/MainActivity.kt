@@ -224,7 +224,7 @@ fun ConfigurationPopup(
                 TextField(
                     value = apiUrl,
                     onValueChange = { apiUrl = it },
-                    label = { Text("Image API (return [{url: image_url}])") },
+                    label = { Text("API (return [{url: image}])") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp),
@@ -237,7 +237,7 @@ fun ConfigurationPopup(
                         .fillMaxWidth()
                         .padding(8.dp),
                     keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                    onValueChange = { delaySeconds = if (it != "") it.toLong() else 0 })
+                    onValueChange = { if (it != "") delaySeconds = it.toLong() })
 
                 Row(
                     modifier = Modifier
@@ -247,13 +247,13 @@ fun ConfigurationPopup(
                     TextField(value = sleepFrom.toString(),
                         label = { Text(text = "Sleep from hour") },
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                        onValueChange = { sleepFrom = if (it != "") it.toLong() else 0 })
+                        onValueChange = { if (it != "") sleepFrom = it.toLong() })
 
                     TextField(value = sleepTo.toString(),
                         label = { Text(text = "to hour") },
                         modifier = Modifier.padding(start = 8.dp),
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                        onValueChange = { sleepTo = if (it != "") it.toLong() else 0 })
+                        onValueChange = { if (it != "") sleepTo = it.toLong() })
                 }
 
                 Row(
