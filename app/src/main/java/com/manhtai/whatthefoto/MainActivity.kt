@@ -210,7 +210,7 @@ fun ConfigurationPopup(
                         .padding(bottom = 16.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    Button(onClick = {
+                    TextButton(onClick = {
                         val intent = Intent(Settings.ACTION_WIFI_SETTINGS)
                         intent.putExtra("only_access_points", true);
                         intent.putExtra("extra_prefs_show_button_bar", true);
