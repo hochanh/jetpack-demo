@@ -147,8 +147,7 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
 
         // Show Configuration Popup
         if (isConfigPopupVisible) {
-            ConfigurationPopup(
-                context,
+            ConfigurationPopup(context,
                 onDismiss = { isConfigPopupVisible = false },
                 onSave = { newApiUrl, seconds, fromHour, toHour ->
                     apiUrl = newApiUrl
@@ -201,6 +200,7 @@ fun ConfigurationPopup(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(Color.White)
                 .padding(16.dp)
         ) {
             Column {
@@ -245,15 +245,19 @@ fun ConfigurationPopup(
                         .padding(8.dp)
                 ) {
                     TextField(value = sleepFrom.toString(),
-                        label = { Text(text = "Sleep from hour") },
+                        label = { Text(text = "Sleep from hour (0h-24h)") },
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                        onValueChange = { if (it != "") sleepFrom = it.toLong() })
+                        onValueChange = {
+                            if (it != "" && it.toLong() in 0..24) sleepFrom = it.toLong()
+                        })
 
                     TextField(value = sleepTo.toString(),
-                        label = { Text(text = "to hour") },
+                        label = { Text(text = "to hour (0h-24h)") },
                         modifier = Modifier.padding(start = 8.dp),
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                        onValueChange = { if (it != "") sleepTo = it.toLong() })
+                        onValueChange = {
+                            if (it != "" && it.toLong() in 0..24) sleepTo = it.toLong()
+                        })
                 }
 
                 Row(
