@@ -89,7 +89,7 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
                 isScreenOn = if (sleepFromHour < sleepToHour) {
                     hour < sleepFromHour || hour > sleepToHour
                 } else {
-                    hour in (sleepToHour + 1)..<sleepFromHour
+                    hour in sleepToHour..sleepFromHour
                 }
 
                 Log.i(TAG, isScreenOn.toString())
@@ -147,7 +147,8 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
 
         // Show Configuration Popup
         if (isConfigPopupVisible) {
-            ConfigurationPopup(context,
+            ConfigurationPopup(
+                context,
                 onDismiss = { isConfigPopupVisible = false },
                 onSave = { newApiUrl, seconds, fromHour, toHour ->
                     apiUrl = newApiUrl
