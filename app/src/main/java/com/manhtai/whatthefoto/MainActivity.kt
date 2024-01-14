@@ -253,7 +253,7 @@ fun ConfigurationPopup(
                         })
 
                     TextField(value = sleepTo.toString(),
-                        label = { Text(text = "to hour (0h-24h)") },
+                        label = { Text(text = "To hour (0h-24h). Now is " + Calendar.getInstance().get(Calendar.HOUR_OF_DAY) + "h.") },
                         modifier = Modifier.padding(start = 8.dp),
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                         onValueChange = {
