@@ -72,7 +72,7 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
     var loading by remember { mutableStateOf(true) }
     var isConfigPopupVisible by remember { mutableStateOf(false) }
     var imageLoopSeconds by remember { mutableLongStateOf(30) }
-    var sleepFromHour by remember { mutableLongStateOf(9) }
+    var sleepFromHour by remember { mutableLongStateOf(19) }
     var sleepToHour by remember { mutableLongStateOf(8) }
     var isScreenOn by remember { mutableStateOf(true) }
 
