@@ -238,7 +238,9 @@ fun ConfigurationPopup(
                         .fillMaxWidth()
                         .padding(8.dp),
                     keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                    onValueChange = { if (it != "") delaySeconds = it.toLong() })
+                    onValueChange = {
+                        delaySeconds = if (it != "" && it.toLong() > 0) it.toLong() else 1
+                    })
 
                 Row(
                     modifier = Modifier
@@ -249,15 +251,20 @@ fun ConfigurationPopup(
                         label = { Text(text = "Sleep from hour (0h-24h)") },
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                         onValueChange = {
-                            if (it != "" && it.toLong() in 0..24) sleepFrom = it.toLong()
+                            sleepFrom = if (it != "" && it.toLong() in 0..24) it.toLong() else 0
                         })
 
                     TextField(value = sleepTo.toString(),
-                        label = { Text(text = "To hour (0h-24h). Now is " + Calendar.getInstance().get(Calendar.HOUR_OF_DAY) + "h.") },
+                        label = {
+                            Text(
+                                text = "To hour (0h-24h). Now is " + Calendar.getInstance()
+                                    .get(Calendar.HOUR_OF_DAY) + "h."
+                            )
+                        },
                         modifier = Modifier.padding(start = 8.dp),
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                         onValueChange = {
-                            if (it != "" && it.toLong() in 0..24) sleepTo = it.toLong()
+                            sleepTo = if (it != "" && it.toLong() in 0..24) it.toLong() else 0
                         })
                 }
 
