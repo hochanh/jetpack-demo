@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.Crossfade
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,6 +51,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Calendar
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,11 +67,14 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
-    var apiUrl by remember { mutableStateOf("https://api.thecatapi.com/v1/images/search?limit=10") }
+    var apiUrl by remember { mutableStateOf("https://api.thecatapi.com/v1/images/search?limit=1") }
     var imageUrl by remember { mutableStateOf("https://cdn2.thecatapi.com/images/7_rjG2-pc.jpg") }
     var loading by remember { mutableStateOf(true) }
     var isConfigPopupVisible by remember { mutableStateOf(false) }
-    var imageLoopSeconds by remember { mutableStateOf(30L) }
+    var imageLoopSeconds by remember { mutableLongStateOf(30) }
+    var sleepFromHour by remember { mutableLongStateOf(9) }
+    var sleepToHour by remember { mutableLongStateOf(8) }
+    var isScreenOn by remember { mutableStateOf(true) }
 
     val TAG = "Main"
     val context = LocalContext.current
@@ -75,13 +84,35 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
             while (true) {
+                // Sleep
+                val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+                isScreenOn = if (sleepFromHour < sleepToHour) {
+                    hour < sleepFromHour || hour > sleepToHour
+                } else {
+                    hour in (sleepToHour + 1)..<sleepFromHour
+                }
+
+                Log.i(TAG, isScreenOn.toString())
+                if (!isScreenOn) {
+                    withContext(Dispatchers.Main) {
+                        setBrightness(context, 0f)
+                    }
+                    delay(1.minutes)
+                    continue
+                } else {
+                    withContext(Dispatchers.Main) {
+                        setBrightness(context, -1f)
+                    }
+                }
+
+                // Load image
                 loading = true
                 try {
                     val response = photoAPI.getPhotos(apiUrl).execute().body()
                     if (response != null) {
                         for (photo in response) {
                             imageUrl = photo.url
-                            delay(imageLoopSeconds * 1000)
+                            delay(imageLoopSeconds.seconds)
                         }
                     }
                 } catch (e: Exception) {
@@ -93,6 +124,7 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
         }
     }
 
+    // Display images
     Box(
         modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
     ) {
@@ -118,12 +150,16 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
             ConfigurationPopup(
                 context,
                 onDismiss = { isConfigPopupVisible = false },
-                onSave = { newApiUrl, seconds ->
+                onSave = { newApiUrl, seconds, fromHour, toHour ->
                     apiUrl = newApiUrl
                     imageLoopSeconds = seconds
+                    sleepFromHour = fromHour
+                    sleepToHour = toHour
                 },
                 apiUrl,
-                imageLoopSeconds
+                imageLoopSeconds,
+                sleepFromHour,
+                sleepToHour
             )
         }
     }
@@ -135,14 +171,28 @@ fun MainPreview() {
     Main()
 }
 
+fun setBrightness(context: Context, brightness: Float) {
+    val window = (context as? ComponentActivity)?.window
+    val layoutParams = window?.attributes
+    layoutParams?.flags = layoutParams?.flags?.or(FLAG_KEEP_SCREEN_ON)
+    layoutParams?.screenBrightness = brightness
+    window?.attributes = layoutParams
+}
 
 @Composable
 fun ConfigurationPopup(
     ctx: Context,
-    onDismiss: () -> Unit, onSave: (String, Long) -> Unit, oldUrl: String, oldDelay: Long
+    onDismiss: () -> Unit,
+    onSave: (String, Long, Long, Long) -> Unit,
+    oldUrl: String,
+    oldDelay: Long,
+    oldFrom: Long,
+    oldTo: Long
 ) {
     var apiUrl by remember { mutableStateOf(oldUrl) }
     var delaySeconds by remember { mutableLongStateOf(oldDelay) }
+    var sleepFrom by remember { mutableLongStateOf(oldFrom) }
+    var sleepTo by remember { mutableLongStateOf(oldTo) }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -174,7 +224,7 @@ fun ConfigurationPopup(
                 TextField(
                     value = apiUrl,
                     onValueChange = { apiUrl = it },
-                    label = { Text("API URL that return: [{url: image_url}]") },
+                    label = { Text("Image API (return [{url: image_url}])") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp),
@@ -182,12 +232,29 @@ fun ConfigurationPopup(
                 )
 
                 TextField(value = delaySeconds.toString(),
-                    label = { Text(text = "Each image delay in seconds") },
+                    label = { Text(text = "Image delay (seconds)") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp),
                     keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                    onValueChange = { delaySeconds = it.toLong() })
+                    onValueChange = { delaySeconds = if (it != "") it.toLong() else 0 })
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    TextField(value = sleepFrom.toString(),
+                        label = { Text(text = "Sleep from hour") },
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                        onValueChange = { sleepFrom = if (it != "") it.toLong() else 0 })
+
+                    TextField(value = sleepTo.toString(),
+                        label = { Text(text = "to hour") },
+                        modifier = Modifier.padding(start = 8.dp),
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                        onValueChange = { sleepTo = if (it != "") it.toLong() else 0 })
+                }
 
                 Row(
                     modifier = Modifier
@@ -195,14 +262,14 @@ fun ConfigurationPopup(
                         .padding(top = 16.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    Button(onClick = onDismiss) {
+                    TextButton(onClick = onDismiss) {
                         Text("Cancel")
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
 
                     Button(onClick = {
-                        onSave(apiUrl, delaySeconds)
+                        onSave(apiUrl, delaySeconds, sleepFrom, sleepTo)
                         onDismiss()
                     }) {
                         Text("Save")
