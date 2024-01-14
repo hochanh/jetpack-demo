@@ -1,8 +1,12 @@
 WhatTheFoto
 ===========
 
-Jetpack Compose image frame display
+Display images in Android photo frame by calling the API.
 
-```shell
-adb -s Q16Q9ZBIL7 shell am start -a android.intent.action.MAIN -c android.intent.category.HOME -n com.manhtai.whatthefoto/.MainActivity
-```
+Support Android 6.0+.
+
+## Demo
+
+![app.png](./img/app.png)
+
+![config.png](./img/config.png)
