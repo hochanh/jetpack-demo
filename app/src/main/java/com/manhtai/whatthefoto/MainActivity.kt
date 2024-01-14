@@ -1,9 +1,7 @@
 package com.manhtai.whatthefoto
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
 import androidx.activity.ComponentActivity
@@ -12,20 +10,8 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,12 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.core.content.ContextCompat.startActivity
 import coil.compose.AsyncImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +48,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
-    var apiUrl by remember { mutableStateOf("https://api.thecatapi.com/v1/images/search?limit=1") }
+    var apiUrl by remember { mutableStateOf("https://api.thecatapi.com/v1/images/search?limit=10") }
     var imageUrl by remember { mutableStateOf("https://cdn2.thecatapi.com/images/7_rjG2-pc.jpg") }
     var loading by remember { mutableStateOf(true) }
     var isConfigPopupVisible by remember { mutableStateOf(false) }
@@ -177,117 +158,4 @@ fun setBrightness(context: Context, brightness: Float) {
     layoutParams?.flags = layoutParams?.flags?.or(FLAG_KEEP_SCREEN_ON)
     layoutParams?.screenBrightness = brightness
     window?.attributes = layoutParams
-}
-
-@Composable
-fun ConfigurationPopup(
-    ctx: Context,
-    onDismiss: () -> Unit,
-    onSave: (String, Long, Long, Long) -> Unit,
-    oldUrl: String,
-    oldDelay: Long,
-    oldFrom: Long,
-    oldTo: Long
-) {
-    var apiUrl by remember { mutableStateOf(oldUrl) }
-    var delaySeconds by remember { mutableLongStateOf(oldDelay) }
-    var sleepFrom by remember { mutableLongStateOf(oldFrom) }
-    var sleepTo by remember { mutableLongStateOf(oldTo) }
-
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White)
-                .padding(16.dp)
-        ) {
-            Column {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = {
-                        val intent = Intent(Settings.ACTION_WIFI_SETTINGS)
-                        intent.putExtra("only_access_points", true);
-                        intent.putExtra("extra_prefs_show_button_bar", true);
-                        intent.putExtra("wifi_enable_next_on_connect", true);
-                        startActivity(ctx, intent, Bundle())
-                    }) {
-                        Text("WiFi Settings")
-                    }
-                }
-
-                TextField(
-                    value = apiUrl,
-                    onValueChange = { apiUrl = it },
-                    label = { Text("API (return [{url: image}])") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Uri),
-                )
-
-                TextField(value = delaySeconds.toString(),
-                    label = { Text(text = "Image delay (seconds)") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                    onValueChange = {
-                        delaySeconds = if (it != "" && it.toLong() > 0) it.toLong() else 1
-                    })
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                ) {
-                    TextField(value = sleepFrom.toString(),
-                        label = { Text(text = "Sleep from hour (0h-24h)") },
-                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                        onValueChange = {
-                            sleepFrom = if (it != "" && it.toLong() in 0..24) it.toLong() else 0
-                        })
-
-                    TextField(value = sleepTo.toString(),
-                        label = {
-                            Text(
-                                text = "To hour (0h-24h). Now is " + Calendar.getInstance()
-                                    .get(Calendar.HOUR_OF_DAY) + "h."
-                            )
-                        },
-                        modifier = Modifier.padding(start = 8.dp),
-                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                        onValueChange = {
-                            sleepTo = if (it != "" && it.toLong() in 0..24) it.toLong() else 0
-                        })
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel")
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Button(onClick = {
-                        onSave(apiUrl, delaySeconds, sleepFrom, sleepTo)
-                        onDismiss()
-                    }) {
-                        Text("Save")
-                    }
-                }
-            }
-        }
-    }
 }
