@@ -81,7 +81,7 @@ fun ConfigurationPopup(
                 TextField(
                     value = conf.apiURL,
                     onValueChange = { conf = conf.copy(apiURL = it) },
-                    label = { Text("API (return [{url: image}])") },
+                    label = { Text("Image API URL (return [{ url }])") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp),

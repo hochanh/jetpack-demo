@@ -10,3 +10,8 @@ Support Android 6.0+.
 ![app.png](./img/app.png)
 
 ![config.png](./img/config.png)
+
+
+---
+
+&copy; 2024 Tai Vo
