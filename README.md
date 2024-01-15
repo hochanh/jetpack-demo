@@ -1,3 +1,5 @@
+[![Release](https://img.shields.io/github/v/release/manhtai/whatthefoto)](https://github.com/manhtai/whatthefoto/releases)
+
 WhatTheFoto
 ===========
 
