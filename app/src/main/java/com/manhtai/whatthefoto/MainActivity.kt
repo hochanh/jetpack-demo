@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -53,13 +52,9 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
-    var apiUrl by remember { mutableStateOf("https://api.thecatapi.com/v1/images/search?limit=10") }
-    var imageUrl by remember { mutableStateOf("https://cdn2.thecatapi.com/images/7_rjG2-pc.jpg") }
-    var loading by remember { mutableStateOf(true) }
+    var conf by remember { mutableStateOf(Config()) }
+    var imageUrl by remember { mutableStateOf(conf.defaultImage) }
     var isConfigPopupVisible by remember { mutableStateOf(false) }
-    var imageLoopSeconds by remember { mutableLongStateOf(3) }
-    var sleepFromHour by remember { mutableLongStateOf(1) }
-    var sleepToHour by remember { mutableLongStateOf(8) }
     var isScreenOn by remember { mutableStateOf(true) }
 
     val TAG = "Main"
@@ -72,10 +67,10 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
             while (true) {
                 // Sleep
                 val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-                isScreenOn = if (sleepFromHour < sleepToHour) {
-                    hour < sleepFromHour || hour > sleepToHour
+                isScreenOn = if (conf.sleepFromHour < conf.sleepToHour) {
+                    hour < conf.sleepFromHour || hour > conf.sleepToHour
                 } else {
-                    hour in sleepToHour..sleepFromHour
+                    hour in conf.sleepToHour..conf.sleepFromHour
                 }
 
                 Log.i(TAG, "Screen is" + if (isScreenOn) " ON." else " OFF.")
@@ -92,9 +87,8 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
                 }
 
                 // Load image
-                loading = true
                 try {
-                    val response = photoAPI.getPhotos(apiUrl).execute().body()
+                    val response = photoAPI.getPhotos(conf.apiURL).execute().body()
                     if (response != null) {
                         for (photo in response) {
                             val req = ImageRequest.Builder(context = context)
@@ -105,14 +99,13 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
                             val res = context.imageLoader.executeBlocking(req)
                             if (res is SuccessResult) {
                                 imageUrl = photo.url
-                                delay(imageLoopSeconds.seconds)
+                                delay(conf.imageDelaySeconds.seconds)
                             }
                         }
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, e.toString())
                 }
-                loading = false
                 Log.i(TAG, imageUrl)
             }
         }
@@ -123,7 +116,9 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
         modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
     ) {
         Crossfade(
-            targetState = imageUrl, label = "Main Image", animationSpec = tween(1000)
+            targetState = imageUrl,
+            label = "Main Image",
+            animationSpec = tween(conf.imageFadeSeconds * 1000)
         ) { imgUrl ->
             AsyncImage(model = ImageRequest.Builder(context = context)
                 .data(imgUrl)
@@ -147,16 +142,10 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
             ConfigurationPopup(
                 context,
                 onDismiss = { isConfigPopupVisible = false },
-                onSave = { newApiUrl, seconds, fromHour, toHour ->
-                    apiUrl = newApiUrl
-                    imageLoopSeconds = seconds
-                    sleepFromHour = fromHour
-                    sleepToHour = toHour
+                onSave = { c ->
+                    conf = c
                 },
-                apiUrl,
-                imageLoopSeconds,
-                sleepFromHour,
-                sleepToHour
+                conf
             )
         }
     }

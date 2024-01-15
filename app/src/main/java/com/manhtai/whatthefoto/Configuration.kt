@@ -20,7 +20,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -33,20 +32,23 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import java.util.Calendar
 
+data class Config(
+    var defaultImage: String = "https://cdn2.thecatapi.com/images/7_rjG2-pc.jpg",
+    var apiURL: String = "https://api.thecatapi.com/v1/images/search?limit=10",
+    var imageDelaySeconds: Int = 30,
+    var imageFadeSeconds: Int = 3,
+    var sleepFromHour: Int = 19,
+    var sleepToHour: Int = 8,
+)
+
 @Composable
 fun ConfigurationPopup(
     ctx: Context,
     onDismiss: () -> Unit,
-    onSave: (String, Long, Long, Long) -> Unit,
-    oldUrl: String,
-    oldDelay: Long,
-    oldFrom: Long,
-    oldTo: Long
+    onSave: (c: Config) -> Unit,
+    oldConf: Config,
 ) {
-    var apiUrl by remember { mutableStateOf(oldUrl) }
-    var delaySeconds by remember { mutableLongStateOf(oldDelay) }
-    var sleepFrom by remember { mutableLongStateOf(oldFrom) }
-    var sleepTo by remember { mutableLongStateOf(oldTo) }
+    var conf by remember { mutableStateOf(oldConf) }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -77,8 +79,8 @@ fun ConfigurationPopup(
                 }
 
                 TextField(
-                    value = apiUrl,
-                    onValueChange = { apiUrl = it },
+                    value = conf.apiURL,
+                    onValueChange = { conf = conf.copy(apiURL = it) },
                     label = { Text("API (return [{url: image}])") },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -86,29 +88,45 @@ fun ConfigurationPopup(
                     keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Uri),
                 )
 
-                TextField(value = delaySeconds.toString(),
-                    label = { Text(text = "Image delay (seconds)") },
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp),
-                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                    onValueChange = {
-                        delaySeconds = if (it != "" && it.toLong() > 0) it.toLong() else 1
-                    })
+                        .padding(8.dp)
+                ) {
+                    TextField(value = conf.imageDelaySeconds.toString(),
+                        label = { Text(text = "Image delay (seconds)") },
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                        onValueChange = {
+                            conf =
+                                conf.copy(imageDelaySeconds = if (it != "" && it.toInt() > 0) it.toInt() else 1)
+                        })
+
+                    TextField(value = conf.imageFadeSeconds.toString(),
+                        label = { Text(text = "Image fade (seconds)") },
+                        modifier = Modifier
+                            .padding(start = 8.dp),
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                        onValueChange = {
+                            conf = conf.copy(imageFadeSeconds = if (it != "") it.toInt() else 0)
+                        })
+                }
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp)
                 ) {
-                    TextField(value = sleepFrom.toString(),
+                    TextField(value = conf.sleepFromHour.toString(),
                         label = { Text(text = "Sleep from hour (0h-24h)") },
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                         onValueChange = {
-                            sleepFrom = if (it != "" && it.toLong() in 0..24) it.toLong() else 0
+                            conf = conf.copy(
+                                sleepFromHour =
+                                if (it != "" && it.toInt() in 0..24) it.toInt() else 0
+                            )
                         })
 
-                    TextField(value = sleepTo.toString(),
+                    TextField(value = conf.sleepToHour.toString(),
                         label = {
                             Text(
                                 text = "To hour (0h-24h). Now is " + Calendar.getInstance()
@@ -118,7 +136,10 @@ fun ConfigurationPopup(
                         modifier = Modifier.padding(start = 8.dp),
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                         onValueChange = {
-                            sleepTo = if (it != "" && it.toLong() in 0..24) it.toLong() else 0
+                            conf = conf.copy(
+                                sleepToHour =
+                                if (it != "" && it.toInt() in 0..24) it.toInt() else 0
+                            )
                         })
                 }
 
@@ -135,7 +156,7 @@ fun ConfigurationPopup(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     Button(onClick = {
-                        onSave(apiUrl, delaySeconds, sleepFrom, sleepTo)
+                        onSave(conf)
                         onDismiss()
                     }) {
                         Text("Save")
