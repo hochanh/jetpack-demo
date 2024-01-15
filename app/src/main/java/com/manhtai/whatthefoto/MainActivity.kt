@@ -28,6 +28,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import coil.compose.AsyncImage
+import coil.executeBlocking
+import coil.imageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
+import coil.size.Size
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -52,8 +57,8 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
     var imageUrl by remember { mutableStateOf("https://cdn2.thecatapi.com/images/7_rjG2-pc.jpg") }
     var loading by remember { mutableStateOf(true) }
     var isConfigPopupVisible by remember { mutableStateOf(false) }
-    var imageLoopSeconds by remember { mutableLongStateOf(30) }
-    var sleepFromHour by remember { mutableLongStateOf(19) }
+    var imageLoopSeconds by remember { mutableLongStateOf(3) }
+    var sleepFromHour by remember { mutableLongStateOf(1) }
     var sleepToHour by remember { mutableLongStateOf(8) }
     var isScreenOn by remember { mutableStateOf(true) }
 
@@ -73,7 +78,7 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
                     hour in sleepToHour..sleepFromHour
                 }
 
-                Log.i(TAG, isScreenOn.toString())
+                Log.i(TAG, "Screen is" + if (isScreenOn) " ON." else " OFF.")
                 if (!isScreenOn) {
                     withContext(Dispatchers.Main) {
                         setBrightness(context, 0f)
@@ -92,8 +97,16 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
                     val response = photoAPI.getPhotos(apiUrl).execute().body()
                     if (response != null) {
                         for (photo in response) {
-                            imageUrl = photo.url
-                            delay(imageLoopSeconds.seconds)
+                            val req = ImageRequest.Builder(context = context)
+                                .data(photo.url)
+                                .size(Size.ORIGINAL)
+                                .build()
+
+                            val res = context.imageLoader.executeBlocking(req)
+                            if (res is SuccessResult) {
+                                imageUrl = photo.url
+                                delay(imageLoopSeconds.seconds)
+                            }
                         }
                     }
                 } catch (e: Exception) {
@@ -112,7 +125,10 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
         Crossfade(
             targetState = imageUrl, label = "Main Image", animationSpec = tween(1000)
         ) { imgUrl ->
-            AsyncImage(model = imgUrl,
+            AsyncImage(model = ImageRequest.Builder(context = context)
+                .data(imgUrl)
+                .size(Size.ORIGINAL)
+                .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
