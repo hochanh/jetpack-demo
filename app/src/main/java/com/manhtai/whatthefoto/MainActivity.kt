@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -22,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import android.graphics.Color as Colour
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -52,25 +54,34 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
-    var conf by remember { mutableStateOf(Config()) }
-    var imageUrl by remember { mutableStateOf(conf.defaultImage) }
-    var isConfigPopupVisible by remember { mutableStateOf(false) }
-    var isScreenOn by remember { mutableStateOf(true) }
-
     val TAG = "Main"
     val context = LocalContext.current
     val coroutineScope: CoroutineScope = rememberCoroutineScope()
 
+    var conf by remember { mutableStateOf(Config()) }
+    var imageUrl by remember { mutableStateOf(conf.defaultImage) }
+    var isConfigPopupVisible by remember { mutableStateOf(false) }
+    var isScreenOn by remember { mutableStateOf(true) }
+    var bgColor by remember { mutableIntStateOf(Colour.parseColor(conf.backgroundColor)) }
+
     // Start periodic updates
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
+            val db = AppDatabase.getDatabase(context = context)
+            val dbConf = db.configDao().get()
+            if (dbConf == null) {
+                db.configDao().insert(conf)
+            } else {
+                conf = dbConf
+            }
+
             while (true) {
                 // Sleep
                 val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
                 isScreenOn = if (conf.sleepFromHour < conf.sleepToHour) {
                     hour < conf.sleepFromHour || hour > conf.sleepToHour
                 } else {
-                    hour in conf.sleepToHour..conf.sleepFromHour
+                    hour in conf.sleepToHour + 1..<conf.sleepFromHour
                 }
 
                 Log.i(TAG, "Screen is" + if (isScreenOn) " ON." else " OFF.")
@@ -128,7 +139,7 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black)
+                    .background(Color(bgColor))
                     .pointerInput(Unit) {
                         detectTapGestures {
                             isConfigPopupVisible = true
@@ -144,6 +155,11 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
                 onDismiss = { isConfigPopupVisible = false },
                 onSave = { c ->
                     conf = c
+                    bgColor = Colour.parseColor(c.backgroundColor)
+                    coroutineScope.launch(Dispatchers.IO) {
+                        val db = AppDatabase.getDatabase(context = context)
+                        db.configDao().insert(conf)
+                    }
                 },
                 conf
             )
