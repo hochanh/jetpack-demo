@@ -30,16 +30,58 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
+import androidx.room.ColumnInfo
+import androidx.room.Dao
+import androidx.room.Database
+import androidx.room.Entity
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.Room
+import androidx.room.RoomDatabase
 import java.util.Calendar
 
+@Entity
 data class Config(
-    var defaultImage: String = "https://cdn2.thecatapi.com/images/7_rjG2-pc.jpg",
-    var apiURL: String = "https://api.thecatapi.com/v1/images/search?limit=10",
-    var imageDelaySeconds: Int = 30,
-    var imageFadeSeconds: Int = 3,
-    var sleepFromHour: Int = 19,
-    var sleepToHour: Int = 8,
+    val defaultImage: String = "https://cdn2.thecatapi.com/images/7_rjG2-pc.jpg",
+
+    @PrimaryKey val id: Int = 1,
+    @ColumnInfo(name = "api_url") val apiURL: String = "https://api.thecatapi.com/v1/images/search?limit=10",
+    @ColumnInfo(name = "image_delay_seconds") val imageDelaySeconds: Int = 30,
+    @ColumnInfo(name = "image_fade_seconds") val imageFadeSeconds: Int = 3,
+    @ColumnInfo(name = "sleep_from_hour") val sleepFromHour: Int = 19,
+    @ColumnInfo(name = "sleep_to_hour") val sleepToHour: Int = 8,
 )
+
+@Dao
+interface ConfigDao {
+    @Query("SELECT * FROM config WHERE id = 1")
+    fun get(): Config?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insert(conf: Config)
+}
+
+@Database(entities = [Config::class], version = 1, exportSchema = false)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun configDao(): ConfigDao
+
+    companion object {
+        @Volatile
+        private var Instance: AppDatabase? = null
+
+        fun getDatabase(context: Context): AppDatabase {
+            // if the Instance is not null, return it, otherwise create a new database instance.
+            return Instance ?: synchronized(this) {
+                Room.databaseBuilder(context, AppDatabase::class.java, "local-database")
+                    .build()
+                    .also { Instance = it }
+            }
+        }
+    }
+}
+
 
 @Composable
 fun ConfigurationPopup(

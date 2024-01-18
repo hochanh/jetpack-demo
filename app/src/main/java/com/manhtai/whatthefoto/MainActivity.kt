@@ -52,18 +52,26 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
+    val TAG = "Main"
+    val context = LocalContext.current
+    val coroutineScope: CoroutineScope = rememberCoroutineScope()
+
     var conf by remember { mutableStateOf(Config()) }
     var imageUrl by remember { mutableStateOf(conf.defaultImage) }
     var isConfigPopupVisible by remember { mutableStateOf(false) }
     var isScreenOn by remember { mutableStateOf(true) }
 
-    val TAG = "Main"
-    val context = LocalContext.current
-    val coroutineScope: CoroutineScope = rememberCoroutineScope()
-
     // Start periodic updates
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
+            val db = AppDatabase.getDatabase(context = context)
+            val dbConf = db.configDao().get()
+            if (dbConf == null) {
+               db.configDao().insert(conf)
+            } else {
+                conf = dbConf
+            }
+
             while (true) {
                 // Sleep
                 val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
@@ -144,6 +152,10 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
                 onDismiss = { isConfigPopupVisible = false },
                 onSave = { c ->
                     conf = c
+                    coroutineScope.launch(Dispatchers.IO) {
+                        val db = AppDatabase.getDatabase(context = context)
+                        db.configDao().insert(conf)
+                    }
                 },
                 conf
             )
