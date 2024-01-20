@@ -54,7 +54,7 @@ data class Config(
     @ColumnInfo(name = "image_fade_seconds") val imageFadeSeconds: Int = 3,
     @ColumnInfo(name = "sleep_from_hour") val sleepFromHour: Int = 19,
     @ColumnInfo(name = "sleep_to_hour") val sleepToHour: Int = 8,
-    @ColumnInfo(name = "background_color") val backgroundColor: String = "#000000",
+    @ColumnInfo(name = "background_color") val backgroundColor: String = "black",
 )
 
 @Dao
@@ -132,7 +132,10 @@ fun ConfigurationPopup(
 
                 TextField(
                     value = apiURL,
-                    onValueChange = { apiURL = it },
+                    onValueChange = {
+                        apiURL = it
+                        msg = ""
+                    },
                     label = { Text("Image API URL (return [{ url }])") },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -150,6 +153,7 @@ fun ConfigurationPopup(
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                         onValueChange = {
                             delaySeconds = it
+                            msg = ""
                         })
 
                     TextField(value = fadeSeconds,
@@ -159,6 +163,7 @@ fun ConfigurationPopup(
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                         onValueChange = {
                             fadeSeconds = it
+                            msg = ""
                         })
                 }
 
@@ -172,6 +177,7 @@ fun ConfigurationPopup(
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                         onValueChange = {
                             sleepFrom = it
+                            msg = ""
                         })
 
                     TextField(value = sleepTo,
@@ -185,6 +191,7 @@ fun ConfigurationPopup(
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                         onValueChange = {
                             sleepTo = it
+                            msg = ""
                         })
                 }
 
@@ -198,6 +205,7 @@ fun ConfigurationPopup(
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Text),
                         onValueChange = {
                             bgColor = it
+                            msg = ""
                         })
                 }
 
