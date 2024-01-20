@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
+fun Main() {
     val TAG = "Main"
     val context = LocalContext.current
     val coroutineScope: CoroutineScope = rememberCoroutineScope()
@@ -84,7 +84,6 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
                     hour in conf.sleepToHour + 1..<conf.sleepFromHour
                 }
 
-                Log.i(TAG, "Screen is" + if (isScreenOn) " ON." else " OFF.")
                 if (!isScreenOn) {
                     withContext(Dispatchers.Main) {
                         setBrightness(context, 0f)
@@ -99,9 +98,14 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
 
                 // Load image
                 try {
+                    val photoAPI = PhotoApi(conf.apiImagePath).service
                     val response = photoAPI.getPhotos(conf.apiURL).execute().body()
                     if (response != null) {
                         for (photo in response) {
+                            if (photo == null) {
+                                continue
+                            }
+
                             val req = ImageRequest.Builder(context = context)
                                 .data(photo.url)
                                 .size(Size.ORIGINAL)
@@ -116,8 +120,8 @@ fun Main(photoAPI: PhotoApiService = PhotoApi.service) {
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, e.toString())
+                    delay(1.seconds)
                 }
-                Log.i(TAG, imageUrl)
             }
         }
     }
