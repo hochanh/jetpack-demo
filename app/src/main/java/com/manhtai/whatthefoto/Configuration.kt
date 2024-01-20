@@ -50,6 +50,7 @@ data class Config(
 
     @PrimaryKey val id: Int = 1,
     @ColumnInfo(name = "api_url") val apiURL: String = "https://api.thecatapi.com/v1/images/search?limit=10",
+    @ColumnInfo(name = "api_image_path") val apiImagePath: String = "url",
     @ColumnInfo(name = "image_delay_seconds") val imageDelaySeconds: Int = 30,
     @ColumnInfo(name = "image_fade_seconds") val imageFadeSeconds: Int = 3,
     @ColumnInfo(name = "sleep_from_hour") val sleepFromHour: Int = 19,
@@ -95,6 +96,7 @@ fun ConfigurationPopup(
 ) {
     var conf by remember { mutableStateOf(oldConf) }
     var apiURL by remember { mutableStateOf(oldConf.apiURL) }
+    var apiImagePath by remember { mutableStateOf(oldConf.apiImagePath) }
     var delaySeconds by remember { mutableStateOf(oldConf.imageDelaySeconds.toString()) }
     var fadeSeconds by remember { mutableStateOf(oldConf.imageFadeSeconds.toString()) }
     var sleepFrom by remember { mutableStateOf(oldConf.sleepFromHour.toString()) }
@@ -136,12 +138,28 @@ fun ConfigurationPopup(
                         apiURL = it
                         msg = ""
                     },
-                    label = { Text("Image API URL (return [{ url }])") },
+                    label = { Text("Image API URL") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp),
                     keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Uri),
                 )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    TextField(
+                        value = apiImagePath,
+                        onValueChange = {
+                            apiImagePath = it
+                            msg = ""
+                        },
+                        label = { Text("Image API path: [{ $apiImagePath }]") },
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Text),
+                    )
+                }
 
                 Row(
                     modifier = Modifier
@@ -163,6 +181,20 @@ fun ConfigurationPopup(
                         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                         onValueChange = {
                             fadeSeconds = it
+                            msg = ""
+                        })
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    TextField(value = bgColor,
+                        label = { Text(text = "Background color") },
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Text),
+                        onValueChange = {
+                            bgColor = it
                             msg = ""
                         })
                 }
@@ -198,20 +230,6 @@ fun ConfigurationPopup(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp)
-                ) {
-                    TextField(value = bgColor,
-                        label = { Text(text = "Background color") },
-                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Text),
-                        onValueChange = {
-                            bgColor = it
-                            msg = ""
-                        })
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
                         .padding(top = 16.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
@@ -224,6 +242,7 @@ fun ConfigurationPopup(
                     Button(onClick = {
                         if (
                             apiURL != "" && isValidURL(apiURL) &&
+                            apiImagePath != "" &&
                             delaySeconds != "" &&
                             fadeSeconds != "" &&
                             sleepFrom != "" && sleepFrom.toInt() < 24 &&
@@ -232,6 +251,7 @@ fun ConfigurationPopup(
                         ) {
                             conf = conf.copy(
                                 apiURL = apiURL,
+                                apiImagePath = apiImagePath,
                                 imageDelaySeconds = delaySeconds.toInt(),
                                 imageFadeSeconds = fadeSeconds.toInt(),
                                 sleepFromHour = sleepFrom.toInt(),
