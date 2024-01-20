@@ -1,4 +1,5 @@
-[![Release](https://img.shields.io/github/v/release/manhtai/whatthefoto)](https://github.com/manhtai/whatthefoto/releases)
+[![License](https://img.shields.io/github/license/manhtai/whatthefoto)](./LICENSE.md)
+[![Release](https://img.shields.io/github/release/manhtai/whatthefoto)](https://github.com/manhtai/whatthefoto/releases)
 
 WhatTheFoto
 ===========
@@ -6,6 +7,8 @@ WhatTheFoto
 Display images in Android photo frame by calling the API.
 
 Support Android 6.0+.
+
+Sample API: https://api.thecatapi.com/v1/images/search?limit=10
 
 ## Demo
 
