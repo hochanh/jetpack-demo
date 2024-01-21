@@ -10,6 +10,8 @@ Support Android 6.0+.
 
 Sample API: https://api.thecatapi.com/v1/images/search?limit=10
 
+Should work with: [Whatthehive](https://github.com/manhtai/whatthehive)
+
 ## Demo
 
 ![app.png](./img/app.png)
